@@ -188,10 +188,10 @@ export const windowSetup = (
         return null
       }
     }
+  }
 
-    if (openerId != null) {
-      window.opener = getOrCreateProxy(openerId)
-    }
+  if (openerId != null) {
+    window.opener = getOrCreateProxy(openerId)
   }
 
   // But we do not support prompt().
@@ -218,23 +218,25 @@ export const windowSetup = (
     window.dispatchEvent(event as MessageEvent)
   })
 
-  window.history.back = function () {
-    ipcRendererInternal.send('ELECTRON_NAVIGATION_CONTROLLER_GO_BACK')
-  }
-
-  window.history.forward = function () {
-    ipcRendererInternal.send('ELECTRON_NAVIGATION_CONTROLLER_GO_FORWARD')
-  }
-
-  window.history.go = function (offset: number) {
-    ipcRendererInternal.send('ELECTRON_NAVIGATION_CONTROLLER_GO_TO_OFFSET', +offset)
-  }
-
-  defineProperty(window.history, 'length', {
-    get: function () {
-      return ipcRendererInternal.sendSync('ELECTRON_NAVIGATION_CONTROLLER_LENGTH')
+  if (!process.sandboxed) {
+    window.history.back = function () {
+      ipcRendererInternal.send('ELECTRON_NAVIGATION_CONTROLLER_GO_BACK')
     }
-  })
+
+    window.history.forward = function () {
+      ipcRendererInternal.send('ELECTRON_NAVIGATION_CONTROLLER_GO_FORWARD')
+    }
+
+    window.history.go = function (offset: number) {
+      ipcRendererInternal.send('ELECTRON_NAVIGATION_CONTROLLER_GO_TO_OFFSET', +offset)
+    }
+
+    defineProperty(window.history, 'length', {
+      get: function () {
+        return ipcRendererInternal.sendSync('ELECTRON_NAVIGATION_CONTROLLER_LENGTH')
+      }
+    })
+  }
 
   if (guestInstanceId != null) {
     // Webview `document.visibilityState` tracks window visibility (and ignores

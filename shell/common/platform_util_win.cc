@@ -299,7 +299,6 @@ void ShowItemInFolderOnWorkerThread(const base::FilePath& full_path) {
       LOG(WARNING) << " " << __func__ << "(): Can't open full_path = \""
                    << full_path.value() << "\""
                    << " hr = " << logging::SystemErrorCodeToString(hr);
-      ui::win::OpenFolderViaShell(dir);
     }
   }
 }

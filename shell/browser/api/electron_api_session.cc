@@ -819,6 +819,32 @@ void Session::Preconnect(const gin_helper::Dictionary& options,
                      url, num_sockets_to_preconnect));
 }
 
+v8::Local<v8::Promise> Session::CloseAllConnections() {
+  auto* isolate = v8::Isolate::GetCurrent();
+  gin_helper::Promise<void> promise(isolate);
+  auto handle = promise.GetHandle();
+
+  content::BrowserContext::GetDefaultStoragePartition(browser_context_.get())
+      ->GetNetworkContext()
+      ->CloseAllConnections(base::BindOnce(
+          gin_helper::Promise<void>::ResolvePromise, std::move(promise)));
+
+  return handle;
+}
+
+v8::Local<v8::Promise> Session::CloseIdleConnections() {
+  auto* isolate = v8::Isolate::GetCurrent();
+  gin_helper::Promise<void> promise(isolate);
+  auto handle = promise.GetHandle();
+
+  content::BrowserContext::GetDefaultStoragePartition(browser_context_.get())
+      ->GetNetworkContext()
+      ->CloseIdleConnections(base::BindOnce(
+          gin_helper::Promise<void>::ResolvePromise, std::move(promise)));
+
+  return handle;
+}
+
 #if BUILDFLAG(ENABLE_BUILTIN_SPELLCHECKER)
 base::Value Session::GetSpellCheckerLanguages() {
   return browser_context_->prefs()
@@ -1021,6 +1047,8 @@ gin::ObjectTemplateBuilder Session::GetObjectTemplateBuilder(
                  &Session::RemoveWordFromSpellCheckerDictionary)
 #endif
       .SetMethod("preconnect", &Session::Preconnect)
+      .SetMethod("closeAllConnections", &Session::CloseAllConnections)
+      .SetMethod("closeIdleConnections", &Session::CloseIdleConnections)
       .SetProperty("cookies", &Session::Cookies)
       .SetProperty("netLog", &Session::NetLog)
       .SetProperty("protocol", &Session::Protocol)

@@ -26,6 +26,7 @@
 #include "components/prefs/value_map_pref_store.h"
 #include "components/proxy_config/proxy_config_dictionary.h"
 #include "components/proxy_config/proxy_config_pref_names.h"
+#include "components/proxy_config/proxy_prefs.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/download_item_utils.h"
@@ -427,14 +428,45 @@ v8::Local<v8::Promise> Session::SetProxy(gin::Arguments* args) {
     return handle;
   }
 
-  std::string proxy_rules, bypass_list, pac_url;
+  std::string mode, proxy_rules, bypass_list, pac_url;
 
   options.Get("pacScript", &pac_url);
   options.Get("proxyRules", &proxy_rules);
   options.Get("proxyBypassRules", &bypass_list);
 
-  // pacScript takes precedence over proxyRules.
-  if (!pac_url.empty()) {
+  ProxyPrefs::ProxyMode proxy_mode = ProxyPrefs::MODE_FIXED_SERVERS;
+  if (!options.Get("mode", &mode)) {
+    // pacScript takes precedence over proxyRules.
+    if (!pac_url.empty()) {
+      proxy_mode = ProxyPrefs::MODE_PAC_SCRIPT;
+    } else {
+      proxy_mode = ProxyPrefs::MODE_FIXED_SERVERS;
+    }
+  } else {
+    if (!ProxyPrefs::StringToProxyMode(mode, &proxy_mode)) {
+      promise.RejectWithErrorMessage(
+          "Invalid mode, must be one of direct, auto_detect, pac_script, "
+          "fixed_servers or system");
+      return handle;
+    }
+  }
+  if (proxy_mode == ProxyPrefs::MODE_DIRECT) {
+    browser_context_->in_memory_pref_store()->SetValue(
+        proxy_config::prefs::kProxy,
+        std::make_unique<base::Value>(ProxyConfigDictionary::CreateDirect()),
+        WriteablePrefStore::DEFAULT_PREF_WRITE_FLAGS);
+  } else if (proxy_mode == ProxyPrefs::MODE_SYSTEM) {
+    browser_context_->in_memory_pref_store()->SetValue(
+        proxy_config::prefs::kProxy,
+        std::make_unique<base::Value>(ProxyConfigDictionary::CreateSystem()),
+        WriteablePrefStore::DEFAULT_PREF_WRITE_FLAGS);
+  } else if (proxy_mode == ProxyPrefs::MODE_AUTO_DETECT) {
+    browser_context_->in_memory_pref_store()->SetValue(
+        proxy_config::prefs::kProxy,
+        std::make_unique<base::Value>(
+            ProxyConfigDictionary::CreateAutoDetect()),
+        WriteablePrefStore::DEFAULT_PREF_WRITE_FLAGS);
+  } else if (proxy_mode == ProxyPrefs::MODE_PAC_SCRIPT) {
     browser_context_->in_memory_pref_store()->SetValue(
         proxy_config::prefs::kProxy,
         std::make_unique<base::Value>(ProxyConfigDictionary::CreatePacScript(

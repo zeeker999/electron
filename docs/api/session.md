@@ -278,6 +278,10 @@ The `proxyBypassRules` is a comma separated list of rules described below:
 
 Returns `Promise<String>` - Resolves with the proxy information for `url`.
 
+#### `ses.forceReloadProxyConfig()`
+
+Returns `Promise<void>` - Resolves when the proxy configuration is reloaded.
+
 #### `ses.setDownloadPath(path)`
 
 * `path` String - The download location.

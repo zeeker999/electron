@@ -487,6 +487,19 @@ v8::Local<v8::Promise> Session::SetProxy(gin::Arguments* args) {
   return handle;
 }
 
+v8::Local<v8::Promise> Session::ForceReloadProxyConfig() {
+  v8::Isolate* isolate = JavascriptEnvironment::GetIsolate();
+  gin_helper::Promise<void> promise(isolate);
+  auto handle = promise.GetHandle();
+
+  content::BrowserContext::GetDefaultStoragePartition(browser_context_)
+      ->GetNetworkContext()
+      ->ForceReloadProxyConfig(base::BindOnce(
+          gin_helper::Promise<void>::ResolvePromise, std::move(promise)));
+
+  return handle;
+}
+
 void Session::SetDownloadPath(const base::FilePath& path) {
   browser_context_->prefs()->SetFilePath(prefs::kDownloadDefaultDirectory,
                                          path);
@@ -1010,6 +1023,7 @@ gin::ObjectTemplateBuilder Session::GetObjectTemplateBuilder(
       .SetMethod("clearStorageData", &Session::ClearStorageData)
       .SetMethod("flushStorageData", &Session::FlushStorageData)
       .SetMethod("setProxy", &Session::SetProxy)
+      .SetMethod("forceReloadProxyConfig", &Session::ForceReloadProxyConfig)
       .SetMethod("setDownloadPath", &Session::SetDownloadPath)
       .SetMethod("enableNetworkEmulation", &Session::EnableNetworkEmulation)
       .SetMethod("disableNetworkEmulation", &Session::DisableNetworkEmulation)

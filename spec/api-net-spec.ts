@@ -630,20 +630,13 @@ describe('net module', () => {
       //   highest: 5
       // })) {
       //   test(`should set priority to ${priorityName} if requested`, async () => {
-      //     const serverUrl = await respondOnce.toSingleURL((request, response) => {
-      //       response.setHeader('x-priority', request.headers.priority || '');
-      //       response.statusCode = 200;
-      //       response.statusMessage = 'OK';
-      //       response.end();
-      //     });
       //     const urlRequest = net.request({
-      //       url: serverUrl,
-      //       origin: serverUrl,
+      //       url: 'https://httpbin.org/get',
       //       priority: priorityName as any
       //     });
       //     const response = await getResponse(urlRequest)
-      //     await collectStreamBody(response);
-      //     expect(response.headers['x-priority']).to.be.a('string').and.match(new RegExp('^u=' + priorityValue));
+      //     const data = JSON.parse(await collectStreamBody(response));
+      //     expect(data.headers.Priority).to.be.a('string').and.match(new RegExp('^u=' + priorityValue));
       //   }, { priorityName });
       // }
 

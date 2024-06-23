@@ -639,7 +639,7 @@ describe('net module', () => {
           const urlRequest = net.request({
             url: serverUrl,
             origin: serverUrl,
-            priority: priorityName
+            priority: priorityName as any
           });
           await collectStreamBody(await getResponse(urlRequest));
         }, { priorityName });
